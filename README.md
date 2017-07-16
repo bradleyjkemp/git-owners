@@ -1,4 +1,4 @@
-# git-owners
+# git-owners [![Build Status](https://travis-ci.org/bradleyjkemp/git-owners.svg?branch=master)](https://travis-ci.org/bradleyjkemp/git-owners)
 
 **git-owners** is a system (inspired by the [Chromium OWNERS system](https://chromium.googlesource.com/chromium/src/+/master/docs/code_reviews.md#OWNERS-files))
 to assign ownership to directories in a repository for the purposes of checking that a PR has been reviewed by sufficiently knowledgeable reviewers.
