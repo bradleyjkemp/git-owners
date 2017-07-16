@@ -22,7 +22,7 @@ alice
 @ignore BUILD
 
 # dave and eve are not required to review changes but should be notified
-@watchers (dave, eve@example.com)
+@watchers (dave & eve@example.com)
 
 @watchers fred *.go
 ```
@@ -64,9 +64,8 @@ A filename pattern is any valid golang match [pattern](https://golang.org/pkg/pa
 An ignore directive is of the form `@ignore` followed by a filename pattern.
 
 #### Watchers
-A watchers directive is of the form `@watchers` followed by a valid watchers specification and an optional filename pattern.
+A watchers directive is of the same form as an owners directive but prefixed with `@watchers`.
 
-A watchers specification is either a single user or a bracketed, comma separated list of users.
 
 ### Resolution algorithm
 
