@@ -1,31 +1,56 @@
 package main
 
 import (
-// "flag"
-// "fmt"
-// "strings"
+	"flag"
+	"fmt"
+	"github.com/bradleyjkemp/git-owners/git"
+	"github.com/bradleyjkemp/git-owners/resolver"
+	// "github.com/bradleyjkemp/git-owners/reviewers"
+	"os"
+	// "strings"
 )
 
 func main() {
-	// baseBranch := flag.String("base-branch", "master", "Base branch to compare commits against (default master)")
-	// flag.Parse()
+	baseBranch := flag.String("base-branch", "master", "Base branch to compare commits against (default master)")
+	allOwners := flag.Bool("a", false, "Resolve all owners up to the root")
+	flag.Parse()
 
-	// baseCommit, err := findBaseCommit(*baseBranch)
-	// if err != nil {
-	// 	fmt.Errorf("%s", err)
-	// }
+	if flag.NArg() == 0 {
+		prReviewers(*baseBranch, *allOwners)
+	} else {
+		for _, file := range flag.Args() {
+			owners, err := resolver.ResolveOwners(file, *allOwners)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Println(file, ": ", owners)
+		}
+	}
+}
 
-	// changedFiles, err := findChangedFiles(baseCommit)
-	// if err != nil {
-	// 	fmt.Errorf("%s", err)
-	// }
+func prReviewers(baseBranch string, allOwners bool) {
+	baseCommit, err := git.FindBaseCommit(baseBranch)
+	if err != nil {
+		fmt.Errorf("%s", err)
+	}
 
-	// fileToOwners, err := mapFilesToOwners(changedFiles)
-	// if err != nil {
-	// 	fmt.Errorf("%s", err)
-	// }
+	changedFiles, err := git.FindChangedFiles(baseCommit)
+	if err != nil {
+		fmt.Errorf("%s", err)
+	}
+	filesToOwners := make(map[string][][]string)
 
-	// suggestedReviewers := suggestReviewers(fileToOwners)
+	for _, file := range changedFiles {
+		owners, err := resolver.ResolveOwnersAtCommit(file, false, baseCommit)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		filesToOwners[file] = owners
+	}
 
-	// fmt.Println(strings.Join(suggestedReviewers, "\n"))
+	for file, owners := range filesToOwners {
+		fmt.Printf("%s: %v\n", file, owners)
+	}
 }
