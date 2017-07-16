@@ -35,14 +35,32 @@ func IsDirective(line string) (directive string, remainder string) {
 	return match[1], match[2]
 }
 
-func ParseOwner(line string) (Owner, error) {
-	if len(strings.SplitN(line, " ", 3)) > 2 {
+func ParseOwner(line string) (*Owner, error) {
+	if groupRegex.Match(line) {
 		return ParseGroupOwners(line)
 	}
-	return nil, nil
+
+	tokens := strings.SplitN(line, " ", 2)
+
+	if len(tokens) == 1 {
+		return &Owner{
+			Users:   []string{tokens[0]},
+			Pattern: "*",
+		}
+	} else {
+		pattern, err := ParsePattern(tokens[1])
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse owner \"%s\"", line)
+		}
+
+		return &Owner{
+			Users:   []string{tokens[0]},
+			Pattern: pattern,
+		}
+	}
 }
 
-func ParseGroupOwners(line string) (Owner, error) {
+func ParseGroupOwners(line string) (*Owner, error) {
 	match := groupRegex.FindStringSubmatch(line)
 	if match == nil || len(match) != 3 {
 		return nil, errors.Errorf("error parsing group \"%s\"", line)
@@ -59,7 +77,7 @@ func ParseGroupOwners(line string) (Owner, error) {
 	return Owner{
 		Users:   owners,
 		Pattern: pattern,
-	}
+	}, nil
 }
 
 func ParsePattern(input string) (string, error) {
@@ -72,7 +90,7 @@ func ParsePattern(input string) (string, error) {
 	return input, nil
 }
 
-func ParseDirective(directive string, value string, owners OwnersFile) error {
+func ParseDirective(directive string, value string, owners *OwnersFile) error {
 	switch directive {
 	case "set":
 		owners.Flags[value] = true
