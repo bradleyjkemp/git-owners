@@ -1,0 +1,3 @@
+# images, etc. are controlled by dave, alice should not have authority
+@set noparent
+dave@example.com

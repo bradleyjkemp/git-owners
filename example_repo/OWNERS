@@ -1,0 +1,8 @@
+# this is the top of the repo so to be explicit we set the noparent flag
+@set noparent
+
+# alice owns the whole repository. She can approve any change
+alice
+
+# never require approval for BUILD files
+@ignore BUILD
