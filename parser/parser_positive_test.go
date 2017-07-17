@@ -2,10 +2,10 @@ package parser
 
 import (
 	"bufio"
+	"github.com/bradleyjkemp/git-owners/file"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 func flagSet(flags ...string) map[string]bool {
@@ -16,33 +16,21 @@ func flagSet(flags ...string) map[string]bool {
 	return set
 }
 
-func owners(users ...string) *Owner {
-	return &Owner{
-		Users:   users,
-		Pattern: "*",
-	}
-}
-
-func patternOwners(pattern string, users ...string) *Owner {
-	return &Owner{
-		Users:   users,
-		Pattern: pattern,
-	}
-}
-
 var positiveParserTests = []struct {
 	file     string
-	expected *OwnersFile
+	expected *file.OwnersFile
 }{
 	{
 		`@set noparent
 		alice
-		(bob & carol) *.js`,
-		&OwnersFile{
+		bob *.js
+		carol ./*.js`,
+		&file.OwnersFile{
 			Flags: flagSet("noparent"),
-			Owners: []*Owner{
-				owners("alice"),
-				patternOwners("*.js", "bob", "carol"),
+			Owners: []*file.Owner{
+				{"alice", "*"},
+				{"bob", "*.js"},
+				{"carol", "./*.js"},
 			},
 		},
 	},
@@ -51,24 +39,20 @@ var positiveParserTests = []struct {
 		# comments and blank lines are ignored
 		
 		alice123@example.com
-		(single user group is okay...)
 		`,
-		&OwnersFile{
-			Owners: []*Owner{
-				owners("alice123@example.com"),
-				owners("single user group is okay..."),
+		&file.OwnersFile{
+			Owners: []*file.Owner{
+				{"alice123@example.com", "*"},
 			},
 		},
 	},
 	{
-		`@set noparent
-		alice
-		(bob & carol) *.js`,
-		&OwnersFile{
-			Flags: flagSet("noparent"),
-			Owners: []*Owner{
-				owners("alice"),
-				patternOwners("*.js", "bob", "carol"),
+		`
+		@watcher dave *.go
+		`,
+		&file.OwnersFile{
+			Watchers: []*file.Owner{
+				{"dave", "*.go"},
 			},
 		},
 	},

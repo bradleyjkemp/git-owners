@@ -2,23 +2,13 @@ package parser
 
 import (
 	"bufio"
+	"fmt"
+	"github.com/bradleyjkemp/git-owners/file"
+	"github.com/bradleyjkemp/git-owners/parser/directives"
 	"github.com/pkg/errors"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
-
-type Owner struct {
-	Users   []string
-	Pattern string
-}
-
-type OwnersFile struct {
-	Flags    map[string]bool
-	Ignored  []string
-	Owners   []*Owner
-	Watchers []*Owner
-}
 
 var (
 	directiveRegex = regexp.MustCompile(`^@([a-z-_]+) (.*)$`)
@@ -31,7 +21,7 @@ func IsDirective(line string) bool {
 	return directiveRegex.Match([]byte(line))
 }
 
-func (o *OwnersFile) ParseDirective(line string) error {
+func ParseDirective(line string, o *file.OwnersFile) error {
 	match := directiveRegex.FindStringSubmatch(line)
 	if match == nil {
 		return errors.Errorf("failed to parse directive \"%s\"", line)
@@ -39,99 +29,22 @@ func (o *OwnersFile) ParseDirective(line string) error {
 	directive := match[1]
 	value := match[2]
 
-	switch directive {
-	case "set":
-		if o.Flags == nil {
-			o.Flags = make(map[string]bool)
-		}
-		o.Flags[value] = true
-
-	case "ignore":
-		pattern, err := parsePattern(value)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse ignore directive")
-		}
-
-		o.Ignored = append(o.Ignored, pattern)
-
-	case "watchers":
-
-	default:
+	parser := directives.Parsers[directive]
+	if parser == nil {
 		return errors.Errorf("unknown directive \"%s\"", directive)
 	}
 
-	return nil
+	return parser(value, o)
 }
 
-func (o *OwnersFile) ParseOwner(line string) error {
-	owner, err := parseOwner(line)
+func ParseOwner(line string, o *file.OwnersFile) error {
+	owner, err := directives.ParseOwner(line)
 	if err != nil {
 		return err
 	}
 
 	o.Owners = append(o.Owners, owner)
 	return nil
-}
-
-func parseOwner(line string) (*Owner, error) {
-	if groupRegex.Match([]byte(line)) {
-		return parseGroupOwners(line)
-	}
-
-	tokens := strings.SplitN(line, " ", 2)
-
-	if len(tokens) == 1 {
-		return &Owner{
-			Users:   []string{tokens[0]},
-			Pattern: "*",
-		}, nil
-	} else {
-		pattern, err := parsePattern(tokens[1])
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse owner \"%s\"", line)
-		}
-
-		return &Owner{
-			Users:   []string{tokens[0]},
-			Pattern: pattern,
-		}, nil
-	}
-}
-
-func parseGroupOwners(line string) (*Owner, error) {
-	match := groupRegex.FindStringSubmatch(line)
-	if match == nil {
-		return nil, errors.Errorf("error parsing group \"%s\"", line)
-	}
-
-	groupString := match[1]
-	owners := strings.Split(groupString, " & ")
-
-	var pattern string
-	if match[2] == "" { // if there was no pattern an empty match is still returned
-		pattern = "*"
-	} else {
-		var err error
-		pattern, err = parsePattern(match[2])
-		if err != nil {
-			return nil, errors.Wrapf(err, "error parsing group \"%s\"", groupString)
-		}
-	}
-
-	return &Owner{
-		Users:   owners,
-		Pattern: pattern,
-	}, nil
-}
-
-func parsePattern(input string) (string, error) {
-	// do a dummy match to check the pattern is valid
-	_, err := filepath.Match(input, "")
-	if err == filepath.ErrBadPattern {
-		return "", errors.Wrapf(err, "failed to parse pattern %s", input)
-	}
-
-	return input, nil
 }
 
 func shouldSkip(line string) bool {
@@ -142,13 +55,13 @@ func shouldSkip(line string) bool {
 	return commentRegex.Match([]byte(line))
 }
 
-func ParseFile(file *bufio.Scanner) (*OwnersFile, error) {
+func ParseFile(input *bufio.Scanner) (*file.OwnersFile, error) {
 	var lineCount int
-	owners := &OwnersFile{}
+	owners := &file.OwnersFile{}
 
-	for file.Scan() {
+	for input.Scan() {
 		lineCount++
-		line := strings.TrimSpace(file.Text())
+		line := strings.TrimSpace(input.Text())
 
 		if shouldSkip(line) {
 			continue
@@ -156,9 +69,10 @@ func ParseFile(file *bufio.Scanner) (*OwnersFile, error) {
 
 		var err error
 		if IsDirective(line) {
-			err = owners.ParseDirective(line)
+			err = ParseDirective(line, owners)
 		} else {
-			err = owners.ParseOwner(line)
+			err = ParseOwner(line, owners)
+			fmt.Println(line, err)
 		}
 
 		if err != nil {
@@ -166,7 +80,7 @@ func ParseFile(file *bufio.Scanner) (*OwnersFile, error) {
 		}
 	}
 
-	if err := file.Err(); err != nil {
+	if err := input.Err(); err != nil {
 		return nil, errors.Wrapf(err, "failed to parse file at line %d", lineCount)
 	}
 

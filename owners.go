@@ -39,7 +39,7 @@ func prReviewers(baseBranch string, allOwners bool) {
 	if err != nil {
 		fmt.Errorf("%s", err)
 	}
-	filesToOwners := make(map[string][][]string)
+	filesToOwners := make(map[string][]string)
 
 	for _, file := range changedFiles {
 		owners, err := resolver.ResolveOwnersAtCommit(file, false, baseCommit)
