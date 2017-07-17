@@ -4,6 +4,7 @@ package resolver
 
 import (
 	"bufio"
+	"github.com/bradleyjkemp/git-owners/file"
 	"github.com/bradleyjkemp/git-owners/git"
 	"github.com/bradleyjkemp/git-owners/parser"
 	"github.com/pkg/errors"
@@ -12,19 +13,19 @@ import (
 	"strings"
 )
 
-func ResolveOwners(path string, allOwners bool) ([][]string, error) {
+func ResolveOwners(path string, allOwners bool) ([]string, error) {
 	_, file := filepath.Split(path)
 	return resolveOwners(filepath.Dir(path), file, allOwners, parseFile)
 }
 
-func ResolveOwnersAtCommit(path string, allOwners bool, commit string) ([][]string, error) {
+func ResolveOwnersAtCommit(path string, allOwners bool, commit string) ([]string, error) {
 	_, file := filepath.Split(path)
 	return resolveOwners(filepath.Dir(path), file, allOwners, parseFileAtCommit(commit))
 }
 
-type fileParser func(string) (*parser.OwnersFile, error)
+type fileParser func(string) (*file.OwnersFile, error)
 
-func resolveOwners(directory, filename string, resolveParents bool, parser fileParser) ([][]string, error) {
+func resolveOwners(directory, filename string, resolveParents bool, parser fileParser) ([]string, error) {
 	gitRoot, err := git.RepoRoot()
 	if err != nil {
 		return nil, err
@@ -76,18 +77,18 @@ func isIgnored(filename string, ignoreRules []string) bool {
 	return false
 }
 
-func matchOwners(filename string, owners []*parser.Owner) [][]string {
-	var matchedOwners [][]string
+func matchOwners(filename string, owners []*file.Owner) []string {
+	var matchedOwners []string
 	for _, owner := range owners {
 		if matched, _ := filepath.Match(owner.Pattern, filename); matched {
-			matchedOwners = append(matchedOwners, owner.Users)
+			matchedOwners = append(matchedOwners, owner.User)
 		}
 	}
 
 	return matchedOwners
 }
 
-func parseFile(path string) (*parser.OwnersFile, error) {
+func parseFile(path string) (*file.OwnersFile, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open OWNERS file %s", path)
@@ -97,7 +98,7 @@ func parseFile(path string) (*parser.OwnersFile, error) {
 }
 
 func parseFileAtCommit(commit string) fileParser {
-	return func(path string) (*parser.OwnersFile, error) {
+	return func(path string) (*file.OwnersFile, error) {
 		file := git.FileContentsAtCommit(path, commit)
 		return parser.ParseFile(bufio.NewScanner(strings.NewReader(file)))
 	}

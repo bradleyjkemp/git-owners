@@ -12,19 +12,23 @@ An example OWNERS file:
 # flags can be set to change resolving behaviour
 @set noparent
 
-# alice can approve any change in this directory
+# alice can approve any change within this directory
 alice
 
-# a review from both bob and carol together is sufficient to approve a change to a go file in this directory
-(bob & carol) *.go
+# bob can approve any change to a go file in this directory
+bob *.go
+
+# carol can approve changes to go files in this directory but not subdirectories
+carol ./*.go
 
 # BUILD files do not need a reviewer
 @ignore BUILD
 
 # dave and eve are not required to review changes but should be notified
-@watchers (dave & eve@example.com)
+@watcher dave
+@watcher eve@example.com
 
-@watchers fred *.go
+@watcher fred *.go
 ```
 Full specification of available directives is given below.
 
@@ -53,10 +57,8 @@ A flag is of the form `@set flagname` and sets the given flag name to true.
 Any string is allowed for a flag name however this implementation only recognises the `noparent` flag.
 
 #### Owners
-An owner directive is of the form of a user specification followed by an optional filename pattern, separated by whitespace.
-
-A user specification is either a single owner or a bracketed group of owners separated by `&`.
-A user may be any of a username, email, or other identifier.
+An owner directive is of the form of a username/email followed by an optional filename pattern, separated by whitespace.
+If no filename pattern is given, it is equivalent to specifying a pattern of "*"
 
 A filename pattern is any valid golang match [pattern](https://golang.org/pkg/path/filepath/#Match).
 
@@ -64,7 +66,7 @@ A filename pattern is any valid golang match [pattern](https://golang.org/pkg/pa
 An ignore directive is of the form `@ignore` followed by a filename pattern.
 
 #### Watchers
-A watchers directive is of the same form as an owners directive but prefixed with `@watchers`.
+A watchers directive is of the same form as an owners directive but prefixed with `@watcher`.
 
 
 ### Resolution algorithm
