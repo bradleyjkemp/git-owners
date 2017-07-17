@@ -11,11 +11,11 @@ var resolverAllOwners = []struct {
 	expectedDirect []string
 }{
 	{"../example_repo/go/src/test/example.go", []string{"bob", "alice"}, []string{"bob"}},
-	// {"../example_repo/go/src/test/README", []string{"alice"}, []string{"alice"}},
-	// {"../example_repo/go/BUILD", nil, nil},
-	// {"../example_repo/BUILD", nil, nil},
-	// {"../example_repo/js/BUILD", nil, nil},
-	// {"../example_repo/js/static/test.png", []string{"dave@example.com"}, []string{"dave@example.com"}},
+	{"../example_repo/go/src/test/README", []string{"alice"}, []string{"alice"}},
+	{"../example_repo/go/BUILD", nil, nil},
+	{"../example_repo/BUILD", nil, nil},
+	{"../example_repo/js/BUILD", nil, nil},
+	{"../example_repo/js/static/test.png", []string{"dave@example.com"}, []string{"dave@example.com"}},
 }
 
 func TestResolverAllOwners(t *testing.T) {
