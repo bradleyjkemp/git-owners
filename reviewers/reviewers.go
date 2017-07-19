@@ -58,7 +58,7 @@ func allFilesCovered(ownerSets map[string]map[string]bool) bool {
 	return true
 }
 
-func suggestReviewers(fileToOwners map[string][]string) []string {
+func SuggestReviewers(fileToOwners map[string][]string) []string {
 	ownersToFiles := createOwnerFilesList(fileToOwners)
 	ownersToOwnership := createOwnersSets(fileToOwners)
 
