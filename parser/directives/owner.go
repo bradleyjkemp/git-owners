@@ -22,7 +22,7 @@ func ParseOwner(line string) (*file.Owner, error) {
 	} else {
 		pattern, err := parsePattern(tokens[1])
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse owner \"%s\"", line)
+			return nil, err
 		}
 
 		return &file.Owner{
@@ -32,12 +32,12 @@ func ParseOwner(line string) (*file.Owner, error) {
 	}
 }
 
-func parsePattern(input string) (string, error) {
+func parsePattern(pattern string) (string, error) {
 	// do a dummy match to check the pattern is valid
-	_, err := filepath.Match(input, "")
+	_, err := filepath.Match(pattern, "dummy")
 	if err == filepath.ErrBadPattern {
-		return "", errors.Wrapf(err, "failed to parse pattern %s", input)
+		return "", errors.Wrapf(err, "failed to parse pattern \"%s\"", pattern)
 	}
 
-	return input, nil
+	return pattern, nil
 }
