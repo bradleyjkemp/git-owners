@@ -22,9 +22,9 @@ var positiveParserTests = []struct {
 }{
 	{
 		`@set noparent
-		alice
-		bob *.js
-		carol ./*.js`,
+	alice
+	bob *.js
+	carol ./*.js`,
 		&file.OwnersFile{
 			Flags: flagSet("noparent"),
 			Owners: []*file.Owner{
@@ -36,10 +36,10 @@ var positiveParserTests = []struct {
 	},
 	{
 		`
-		# comments and blank lines are ignored
-		
-		alice123@example.com
-		`,
+	# comments and blank lines are ignored
+
+	alice123@example.com
+	`,
 		&file.OwnersFile{
 			Owners: []*file.Owner{
 				{"alice123@example.com", "*"},
@@ -48,8 +48,8 @@ var positiveParserTests = []struct {
 	},
 	{
 		`
-		@watcher dave *.go
-		`,
+	@watcher dave *.go
+	`,
 		&file.OwnersFile{
 			Watchers: []*file.Owner{
 				{"dave", "*.go"},
