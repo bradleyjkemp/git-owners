@@ -59,7 +59,7 @@ func removeFromOwnership(ownerSets map[string]map[string]bool, files []string) {
 	}
 }
 
-func allFilesCovered(ownerSets map[string]map[string]bool) bool {
+func noFilesLeft(ownerSets map[string]map[string]bool) bool {
 	for _, set := range ownerSets {
 		if len(set) > 0 {
 			return false
@@ -75,7 +75,7 @@ func SuggestReviewers(fileToOwners map[string][]string) []string {
 
 	var reviewers []string
 
-	for !allFilesCovered(ownersToOwnership) {
+	for !noFilesLeft(ownersToOwnership) {
 		reviewer := largestOwnership(ownersToOwnership)
 		reviewers = append(reviewers, reviewer)
 
