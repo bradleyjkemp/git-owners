@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"github.com/bradleyjkemp/git-owners/git"
 	"github.com/bradleyjkemp/git-owners/resolver"
-	// "github.com/bradleyjkemp/git-owners/reviewers"
+	"github.com/bradleyjkemp/git-owners/reviewers"
 	"os"
-	// "strings"
 )
 
 func main() {
@@ -50,7 +49,7 @@ func prReviewers(baseBranch string, allOwners bool) {
 		filesToOwners[file] = owners
 	}
 
-	for file, owners := range filesToOwners {
-		fmt.Printf("%s: %v\n", file, owners)
-	}
+	minimalReviewers := reviewers.SuggestReviewers(filesToOwners)
+
+	fmt.Println(minimalReviewers)
 }

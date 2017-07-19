@@ -1,5 +1,12 @@
 package reviewers
 
+import (
+	"math/rand"
+	"time"
+)
+
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func createOwnersSets(fileToOwners map[string][]string) map[string]map[string]bool {
 	ownersToOwnership := make(map[string]map[string]bool)
 	for file, owners := range fileToOwners {
@@ -28,16 +35,20 @@ func createOwnerFilesList(fileToOwners map[string][]string) map[string][]string 
 
 func largestOwnership(ownerSets map[string]map[string]bool) string {
 	var maxSize int
-	var largestOwner string
+	var largestOwners []string
 
 	for owner, set := range ownerSets {
 		if len(set) > maxSize {
 			maxSize = len(set)
-			largestOwner = owner
+			largestOwners = []string{owner}
+		} else if len(set) == maxSize {
+			// To properly randomly pick between owners of the same size
+			// we need to keep all of them and select a random one at the end
+			largestOwners = append(largestOwners, owner)
 		}
 	}
 
-	return largestOwner
+	return largestOwners[r.Intn(len(largestOwners))]
 }
 
 func removeFromOwnership(ownerSets map[string]map[string]bool, files []string) {
@@ -58,7 +69,7 @@ func allFilesCovered(ownerSets map[string]map[string]bool) bool {
 	return true
 }
 
-func suggestReviewers(fileToOwners map[string][]string) []string {
+func SuggestReviewers(fileToOwners map[string][]string) []string {
 	ownersToFiles := createOwnerFilesList(fileToOwners)
 	ownersToOwnership := createOwnersSets(fileToOwners)
 

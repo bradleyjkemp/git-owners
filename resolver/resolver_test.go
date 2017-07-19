@@ -10,7 +10,7 @@ var resolverAllOwners = []struct {
 	expected       []string
 	expectedDirect []string
 }{
-	{"../example_repo/go/src/test/example.go", []string{"bob", "alice"}, []string{"bob"}},
+	{"../example_repo/go/src/test/example.go", []string{"bob", "carol", "alice"}, []string{"bob", "carol"}},
 	{"../example_repo/go/src/test/README", []string{"alice"}, []string{"alice"}},
 	{"../example_repo/go/BUILD", nil, nil},
 	{"../example_repo/BUILD", nil, nil},

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/bradleyjkemp/git-owners/file"
 	"github.com/bradleyjkemp/git-owners/parser/directives"
 	"github.com/pkg/errors"
@@ -72,7 +71,6 @@ func ParseFile(input *bufio.Scanner) (*file.OwnersFile, error) {
 			err = ParseDirective(line, owners)
 		} else {
 			err = ParseOwner(line, owners)
-			fmt.Println(line, err)
 		}
 
 		if err != nil {
