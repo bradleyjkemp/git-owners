@@ -15,29 +15,58 @@ import (
 
 func ResolveOwners(path string, allOwners bool) ([]string, error) {
 	_, file := filepath.Split(path)
-	return resolveOwners(filepath.Dir(path), file, allOwners, parseFile)
-}
 
-func ResolveOwnersAtCommit(path string, allOwners bool, commit string) ([]string, error) {
-	_, file := filepath.Split(path)
-	return resolveOwners(filepath.Dir(path), file, allOwners, parseFileAtCommit(commit))
-}
-
-type fileParser func(string) (*file.OwnersFile, error)
-
-func resolveOwners(directory, filename string, resolveParents bool, parser fileParser) ([]string, error) {
 	gitRoot, err := git.RepoRoot()
 	if err != nil {
 		return nil, err
 	}
 
-	ownersPath := filepath.Join(directory, "OWNERS")
+	return resolveOwners(&resolveOwnersArgs{
+		directory:           filepath.Dir(path),
+		filename:            file,
+		resolveParentOwners: allOwners,
+		parser:              parseFile,
+		gitRoot:             gitRoot,
+	})
+}
 
-	if _, err = os.Stat(ownersPath); os.IsNotExist(err) {
-		if directory != gitRoot {
-			return resolveOwners(filepath.Dir(directory), filename, resolveParents, parser)
+func ResolveOwnersAtCommit(path string, allOwners bool, commit string) ([]string, error) {
+	_, file := filepath.Split(path)
+
+	gitRoot, err := git.RepoRoot()
+	if err != nil {
+		return nil, err
+	}
+
+	return resolveOwners(&resolveOwnersArgs{
+		directory:           filepath.Dir(path),
+		filename:            file,
+		resolveParentOwners: allOwners,
+		parser:              parseFileAtCommit(commit),
+		gitRoot:             gitRoot,
+	})
+}
+
+type fileParser func(string) (*file.OwnersFile, error)
+
+type resolveOwnersArgs struct {
+	directory           string
+	filename            string
+	resolveParentOwners bool
+	gitRoot             string
+	parser              fileParser
+	owners              []string
+}
+
+func resolveOwners(args *resolveOwnersArgs) ([]string, error) {
+	ownersPath := filepath.Join(args.directory, "OWNERS")
+
+	if _, err := os.Stat(ownersPath); os.IsNotExist(err) {
+		if args.directory != args.gitRoot {
+			args.directory = filepath.Dir(args.directory)
+			return resolveOwners(args)
 		}
-		return nil, nil
+		return args.owners, nil
 	}
 
 	ownersFile, err := parseFile(ownersPath)
@@ -45,26 +74,25 @@ func resolveOwners(directory, filename string, resolveParents bool, parser fileP
 		return nil, err
 	}
 
-	if isIgnored(filename, ownersFile.Ignored) {
+	// file is ignored so any previous owners are forgotten and we no longer need to look in parent directories
+	if isIgnored(args.filename, ownersFile.Ignored) {
 		return nil, nil
 	}
 
-	owners := matchOwners(filename, ownersFile.Owners)
-
-	if directory == gitRoot || ownersFile.Flags["noparent"] {
-		return owners, nil
+	if args.resolveParentOwners || len(args.owners) == 0 {
+		owners := matchOwners(args.filename, ownersFile.Owners)
+		args.owners = append(args.owners, owners...)
 	}
 
-	if resolveParents || len(owners) == 0 {
-		parentOwners, err := resolveOwners(filepath.Dir(directory), filename, resolveParents, parser)
-		if err != nil {
-			return nil, err
-		}
-
-		return append(owners, parentOwners...), nil
+	if args.directory == args.gitRoot {
+		return args.owners, nil
 	}
 
-	return owners, nil
+	// always need to look in the parent directory in case filename is ignored
+	// however we may not need to care about keeping track of any further owners
+	args.resolveParentOwners = args.resolveParentOwners && !ownersFile.Flags["noparent"]
+	args.directory = filepath.Dir(args.directory)
+	return resolveOwners(args)
 }
 
 func isIgnored(filename string, ignoreRules []string) bool {
