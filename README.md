@@ -1,4 +1,4 @@
-# git-owners [![Build Status](https://travis-ci.org/bradleyjkemp/git-owners.svg?branch=master)](https://travis-ci.org/bradleyjkemp/git-owners) [![Coverage Status](https://coveralls.io/repos/github/bradleyjkemp/git-owners/badge.svg)](https://coveralls.io/github/bradleyjkemp/git-owners)
+# git-owners [![Build Status](https://travis-ci.org/bradleyjkemp/git-owners.svg?branch=master)](https://travis-ci.org/bradleyjkemp/git-owners) [![Coverage Status](https://coveralls.io/repos/github/bradleyjkemp/git-owners/badge.svg?branch=master)](https://coveralls.io/github/bradleyjkemp/git-owners?branch=master)
 
 **git-owners** is a system (inspired by the [Chromium OWNERS system](https://chromium.googlesource.com/chromium/src/+/master/docs/code_reviews.md#OWNERS-files))
 to assign ownership to directories in a repository for the purposes of checking that a PR has been reviewed by sufficiently knowledgeable reviewers.
