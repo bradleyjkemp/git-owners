@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// prCmd represents the pr command
 var PrCmd = &cobra.Command{
 	Use:   "pr",
 	Short: "Calculates a list of reviewers for a PR",
