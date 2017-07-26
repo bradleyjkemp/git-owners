@@ -5,6 +5,7 @@ import (
 	"github.com/bradleyjkemp/git-owners/git"
 	"github.com/bradleyjkemp/git-owners/resolver"
 	"github.com/bradleyjkemp/git-owners/reviewers"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -20,23 +21,9 @@ Resolves a small set of reviewers who can approve this PR
 Apart from always being a covering set of Owners, the exact reviewers output
 by this command is undefined.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		baseCommit, err := git.FindBaseCommit(baseBranch)
+		filesToOwners, err := getFilesToOwnersForPR()
 		if err != nil {
-			return err
-		}
-
-		changedFiles, err := git.FindChangedFiles(baseCommit)
-		if err != nil {
-			return err
-		}
-		filesToOwners := make(map[string][]string)
-
-		for _, file := range changedFiles {
-			owners, err := resolver.ResolveOwnersAtCommit(file, false, baseCommit)
-			if err != nil {
-				return err
-			}
-			filesToOwners[file] = owners
+			return errors.Wrap(err, "failed to get owners for changed files")
 		}
 
 		minimalReviewers := reviewers.SuggestReviewers(filesToOwners)
@@ -44,6 +31,29 @@ by this command is undefined.`,
 		fmt.Println(minimalReviewers)
 		return nil
 	},
+}
+
+func getFilesToOwnersForPR() (map[string][]string, error) {
+	baseCommit, err := git.FindBaseCommit(baseBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	changedFiles, err := git.FindChangedFiles(baseCommit)
+	if err != nil {
+		return nil, err
+	}
+	filesToOwners := make(map[string][]string)
+
+	for _, file := range changedFiles {
+		owners, err := resolver.ResolveOwnersAtCommit(file, false, baseCommit)
+		if err != nil {
+			return nil, err
+		}
+		filesToOwners[file] = owners
+	}
+
+	return filesToOwners, nil
 }
 
 func init() {
