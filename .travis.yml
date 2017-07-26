@@ -6,7 +6,7 @@ jobs:
     - stage: test
       script: $GOPATH/bin/goveralls -service=travis-ci
     - stage: owners
-      script: 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then exit 1; fi'
+      script: 'if [ -z "$GITHUB_TOKEN" ]; then exit 1; fi'
     
 notifications:
   email: false
