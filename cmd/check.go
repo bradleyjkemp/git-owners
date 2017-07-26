@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -31,9 +31,11 @@ environment variables will be used to automatically retrieve usernames of approv
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var approvers []string
 		if githubPR {
-			approvers, err := getGithubReviewers()
-			fmt.Println(approvers)
-			return err
+			var err error
+			approvers, err = getGithubReviewers()
+			if err != nil {
+				return errors.Wrap(err, "failed to retrieve github approvers")
+			}
 		} else {
 			approvers = args
 		}
@@ -85,40 +87,36 @@ FileLoop:
 
 func getGithubReviewers() ([]string, error) {
 	repoSlug := os.Getenv("TRAVIS_REPO_SLUG")
-	pullRequest := os.Getenv("TRAVIS_PULL_REQUEST")
-	if repoSlug == "" || pullRequest == "" {
-		return nil, errors.New("Repo slug or pull request id environment variable not set")
+	if repoSlug == "" {
+		return nil, errors.New("repo slug environment variable not set")
+	}
+	pullRequest, err := strconv.Atoi(os.Getenv("TRAVIS_PULL_REQUEST"))
+	if err != nil {
+		return nil, errors.New("pull request id environment variable not set")
 	}
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/pulls/%s/reviews", repoSlug, pullRequest)
-	fmt.Println("getting", url)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/pulls/%d/reviews", repoSlug, pullRequest)
 	r, err := (&http.Client{Timeout: 10 * time.Second}).Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer r.Body.Close()
 
-	// var reviews GithubReviews
-	buf, err := ioutil.ReadAll(r.Body)
+	var reviews GithubReviews
+	err = json.NewDecoder(r.Body).Decode(&reviews)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to decode github response")
 	}
-	fmt.Println("response", string(buf))
-	// err = json.NewDecoder(r.Body.).Decode(&reviews)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "failed to decode github response")
-	// }
-	// fmt.Println(reviews)
 
-	// approvals := make(map[string]bool)
-	// for _, review := range reviews {
-	// 	approvals[review.User.Login] = review.State == "APPROVED"
-	// }
+	approvals := make(map[string]bool)
+	for _, review := range reviews {
+		approvals[review.User.Login] = review.State == "APPROVED"
+	}
 
 	var approvers []string
-	// for approver := range approvals {
-	// 	approvers = append(approvers, approver)
-	// }
+	for approver := range approvals {
+		approvers = append(approvers, approver)
+	}
 
 	return approvers, nil
 }
