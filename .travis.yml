@@ -1,7 +1,12 @@
 language: go
 before_install:
   - go get github.com/mattn/goveralls
-script:
-  - $GOPATH/bin/goveralls -service=travis-ci
+jobs:
+  include:
+    - stage: test
+      script: $GOPATH/bin/goveralls -service=travis-ci
+    - stage: owners
+      script: 'if [ -z "$GITHUB_TOKEN" ]; then exit 1; fi'
+    
 notifications:
   email: false
