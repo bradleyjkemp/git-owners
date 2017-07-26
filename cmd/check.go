@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -97,22 +98,27 @@ func getGithubReviewers() ([]string, error) {
 	}
 	defer r.Body.Close()
 
-	var reviews GithubReviews
-	err = json.NewDecoder(r.Body).Decode(&reviews)
+	// var reviews GithubReviews
+	buf, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode github response")
+		return nil, err
 	}
-	fmt.Println(reviews)
+	fmt.Println("response", string(buf))
+	// err = json.NewDecoder(r.Body.).Decode(&reviews)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "failed to decode github response")
+	// }
+	// fmt.Println(reviews)
 
-	approvals := make(map[string]bool)
-	for _, review := range reviews {
-		approvals[review.User.Login] = review.State == "APPROVED"
-	}
+	// approvals := make(map[string]bool)
+	// for _, review := range reviews {
+	// 	approvals[review.User.Login] = review.State == "APPROVED"
+	// }
 
 	var approvers []string
-	for approver := range approvals {
-		approvers = append(approvers, approver)
-	}
+	// for approver := range approvals {
+	// 	approvers = append(approvers, approver)
+	// }
 
 	return approvers, nil
 }
