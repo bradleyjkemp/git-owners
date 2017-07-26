@@ -6,6 +6,6 @@ jobs:
     - stage: test
       script: $GOPATH/bin/goveralls -service=travis-ci
     - stage: owners
-      script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then go run main.go check --github fi
+      script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then go run main.go check --github; fi
 notifications:
   email: false
