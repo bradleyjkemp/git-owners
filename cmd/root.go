@@ -14,7 +14,7 @@ var RootCmd = &cobra.Command{
 	Short: "A tool for finding owners and reviewers for files",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 0 {
-			return ListCmd.RunE(CheckCmd, args)
+			return ListCmd.RunE(ListCmd, args)
 		} else {
 			return PrCmd.RunE(PrCmd, nil)
 		}

@@ -25,10 +25,13 @@ by this command is undefined.`,
 		if err != nil {
 			return errors.Wrap(err, "failed to get owners for changed files")
 		}
-
 		minimalReviewers := reviewers.SuggestReviewers(filesToOwners)
 
-		fmt.Println(minimalReviewers)
+		if len(minimalReviewers) == 0 {
+			fmt.Println("No reviewers needed")
+		} else {
+			fmt.Println(minimalReviewers)
+		}
 		return nil
 	},
 }
