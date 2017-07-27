@@ -21,7 +21,7 @@ func RepoRoot() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	if currentDir == root {
 		return ".", nil
 	}
@@ -48,11 +48,14 @@ func FindChangedFiles(startCommit string) ([]string, error) {
 		return nil, errors.Wrapf(err, "error running git diff: %s", string(changedFiles))
 	}
 
-	files := trimAndSplitNull(changedFiles)
-	for i, fname := range files {
-		files[i] = strings.TrimSpace(fname)
+	if len(changedFiles) == 0 {
+		return nil, nil
 	}
 
+	files := trimAndSplitNull(changedFiles)
+	for i, fname := range files {
+		files[i] = fname
+	}
 	return files, nil
 }
 
